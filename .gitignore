@@ -1,0 +1,12 @@
+# Byte-compiled
+__pycache__/
+
+# Distribution / packaging
+build/
+*.egg-info/
+
+# Editors
+.vscode
+
+# logs
+logs

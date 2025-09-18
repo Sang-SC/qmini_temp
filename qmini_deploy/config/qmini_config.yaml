@@ -1,0 +1,26 @@
+imu:
+  port: "/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0003-if00-port0"
+  baudrate: 921600
+
+motor:
+  port_names:
+    - "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA5OHMV-if00-port0"
+    - "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA5OHMV-if01-port0"
+    - "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA5OHMV-if02-port0"
+    - "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA5OHMV-if03-port0"
+
+FSMState_StandUp:
+  joint_standup_q: [0.35, -0.05, -1.5, 1.2, -1.0, -0.35, 0.05, 1.5, -1.2, 1.0]
+  joint_kp: [40.0, 80.0, 40.0, 40.0, 40.0, 40.0, 80.0, 40.0, 40.0, 40.0]
+  joint_kd: [2.0, 4.0, 2.0, 2.0, 2.0, 2.0, 4.0, 2.0, 2.0, 2.0]
+
+FSMState_Walk:
+  default_joint_angles: [0.35, -0.05, -1.5, 1.2, -1.0, -0.35, 0.05, 1.5, -1.2, 1.0]
+  joint_kp: [20.0, 60.0, 30.0, 30.0, 20.0, 20.0, 60.0, 30.0, 30.0, 20.0]
+  joint_kd: [0.75, 2.0, 1.0, 1.0, 0.75, 0.75, 2.0, 1.0, 1.0, 0.75]
+  gait_period: 0.5
+  gait_offsets: [0.0, 0.5]
+  low_vel_thresholds: [0.05, 0.05, 0.1]
+  lin_vel_x_range: [-0.15, 0.2]
+  lin_vel_y_range: [-0.0, 0.0]
+  ang_vel_yaw_range: [-0.3, 0.3]

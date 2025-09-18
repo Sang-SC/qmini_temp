@@ -1,0 +1,5 @@
+name: robot
+age: 1
+sim_flag: true
+kp: [1.0, 1.0, 1.0]
+kd: [0.05, 0.05, 0.05]
