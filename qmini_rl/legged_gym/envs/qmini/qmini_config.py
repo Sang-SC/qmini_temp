@@ -2,7 +2,7 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 
 class QminiCfg(LeggedRobotCfg):
     class env(LeggedRobotCfg.env):
-        num_envs = 256
+        num_envs = 4096
         num_actions = 10
 
         # observation history related
@@ -38,15 +38,15 @@ class QminiCfg(LeggedRobotCfg):
         pos = [0.0, 0.0, 0.48] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
             'hip_yaw_l': 0.35,
-            'hip_roll_l': -0.05,
-            'hip_pitch_l': -1.5,
-            'knee_pitch_l': 1.2,
-            'ankle_pitch_l': -1.0,
+            'hip_roll_l': 0.0,
+            'hip_pitch_l': -1.45,
+            'knee_pitch_l': 1.15,
+            'ankle_pitch_l': -1.18,
             'hip_yaw_r': -0.35,
-            'hip_roll_r': 0.05,
-            'hip_pitch_r': 1.5,
-            'knee_pitch_r': -1.2,
-            'ankle_pitch_r': 1.0,
+            'hip_roll_r': 0.0,
+            'hip_pitch_r': 1.45,
+            'knee_pitch_r': -1.15,
+            'ankle_pitch_r': 1.18,
         }
 
     class commands(LeggedRobotCfg.commands):
@@ -56,7 +56,7 @@ class QminiCfg(LeggedRobotCfg):
         resampling_time = 5.0 # time before command are changed[s]
         heading_command = False # if true: compute ang vel command from heading error
         class ranges:
-            lin_vel_x = [-0.4, 0.5] # min max [m/s]
+            lin_vel_x = [-0.5, 0.6] # min max [m/s]
             lin_vel_y = [-0.0, 0.0]   # min max [m/s]
             ang_vel_yaw = [-0.6, 0.6]    # min max [rad/s]
             heading = [-3.14, 3.14]
@@ -77,9 +77,9 @@ class QminiCfg(LeggedRobotCfg):
         soft_dof_vel_limit = 0.9
         soft_torque_limit = 0.9
         max_contact_force = 140.0
-        base_height_target = 0.42
+        base_height_target = 0.41
         base_roll_target = 0.0
-        base_pitch_target = 0.0
+        base_pitch_target = 0.05
         foot_height_offset = 0.095   # height of the foot coordinate origin above ground [m]
         gait_feet_swing_height_target = 0.05
 
@@ -112,20 +112,18 @@ class QminiCfg(LeggedRobotCfg):
             gait_match = 0.3
             gait_feet_swing_height = -50.0
             gait_feet_air_time = 4.0
-            gait_symmetry = 0.0
 
             # Other
             stand_still = -1.0
             lin_vel_z = -0.5
             ang_vel_xy = -0.025
-            hip_close_to_default = -2.0
+            hip_close_to_default = -1.0
+            action = -5.e-4
+            action_rate = -5.e-3
             close_to_default = 0.0
-            torques = -2.e-5
-            dof_vel = -1.e-4
-            dof_acc = -1.e-7
-            action = -1.e-4
-            action_rate = -2.e-3
-            base_acc = 0.0
+            torques = 0.0
+            dof_vel = 0.0
+            dof_acc = 0.0
 
     class domain_rand(LeggedRobotCfg.domain_rand):
         randomize_friction = True
@@ -134,10 +132,10 @@ class QminiCfg(LeggedRobotCfg):
         added_base_mass_range = [-1.0, 3.0]
         push_robots = True
         push_interval_s = 5.0
-        push_robots_vel_x = [-0.15, 0.15]
+        push_robots_vel_x = [-0.2, 0.2]
         push_robots_vel_y = [-0.1, 0.1]
         randomize_base_com = True
-        added_base_com_x_range = [-0.02, 0.02]
+        added_base_com_x_range = [-0.02, 0.03]
         added_base_com_y_range = [-0.01, 0.01]
         added_base_com_z_range = [-0.01, 0.01]
         randomize_joint_friction = True
@@ -145,7 +143,7 @@ class QminiCfg(LeggedRobotCfg):
         randomize_joint_damping = True
         joint_damping_range = [0.001, 0.01]
         randomize_joint_armature = True
-        joint_armature_range = [0.001, 0.02]
+        joint_armature_range = [0.001, 0.01]
         randomize_pd_gain = True
         p_gain_scale_range = [0.8, 1.2]
         d_gain_scale_range = [0.8, 1.2]
@@ -168,7 +166,7 @@ class QminiCfg(LeggedRobotCfg):
         add_noise = True
         noise_level = 1.0 # scales other values
         class noise_scales:
-            dof_pos = 0.02
+            dof_pos = 0.01
             dof_vel = 1.5
             lin_vel = 0.1
             ang_vel = 0.2
@@ -222,7 +220,7 @@ class QminiCfg(LeggedRobotCfg):
             period = 0.5
 
 class QminiCfgPPO( LeggedRobotCfgPPO ):
-    seed = 52
+    seed = 42
     class algorithm( LeggedRobotCfgPPO.algorithm ):
         entropy_coef = 0.01
     class runner( LeggedRobotCfgPPO.runner ):

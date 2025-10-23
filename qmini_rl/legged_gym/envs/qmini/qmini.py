@@ -142,13 +142,6 @@ class Qmini(LeggedRobot):
         self.offsets = torch.stack([offset_rand, offset_rand + 0.5], dim=1) % 1
         self.stand_leg_phase = torch.tensor([[0.0, 0.5]], device=self.device).repeat(self.num_envs, 1)
 
-        # Gait symmetry
-        self.gait_symmetry_start_time = 2.0 * self.period
-        self.gait_symmetry_history_steps = int(1.0 * self.period / self.dt)
-        self.gait_symmetry_shift_steps = int(0.5 * self.period / self.dt)
-        self.gait_symmetry_dof_pos_history_buf = torch.zeros(self.num_envs, self.gait_symmetry_history_steps, self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
-        self.gait_symmetry_dof_vel_history_buf = torch.zeros(self.num_envs, self.gait_symmetry_history_steps, self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
-
     def _init_buffers(self):
         super()._init_buffers()
         self._init_history_buf()
@@ -210,16 +203,6 @@ class Qmini(LeggedRobot):
         self.clock_input = torch.cat((torch.sin(2 * torch.pi * self.leg_phase), 
                             torch.cos(2 * torch.pi * self.leg_phase)), dim=1)
 
-        # Gait symmetry
-        self.gait_symmetry_dof_pos_history_buf = torch.cat([
-            self.gait_symmetry_dof_pos_history_buf[:, 1:],
-            self.dof_pos.unsqueeze(1)
-        ], dim=1)
-        self.gait_symmetry_dof_vel_history_buf = torch.cat([
-            self.gait_symmetry_dof_vel_history_buf[:, 1:],
-            self.dof_vel.unsqueeze(1)
-        ], dim=1)
-
     def _post_physics_step_callback(self):
         self.update_base_state()
         self.update_feet_state()
@@ -261,8 +244,6 @@ class Qmini(LeggedRobot):
         self.last_contacts[env_ids, :] = False
 
         # Reset gait
-        self.gait_symmetry_dof_pos_history_buf[env_ids, :, :] = 0.
-        self.gait_symmetry_dof_vel_history_buf[env_ids, :, :] = 0.
         offset_rand = torch.randint(0, 2, (len(env_ids),), device=self.device).float() * 0.5
         self.offsets[env_ids] = torch.stack([offset_rand, offset_rand + 0.5], dim=1) % 1
 
@@ -456,35 +437,6 @@ class Qmini(LeggedRobot):
         error[self.low_vel_mask] = 0.
         return error
 
-    def _reward_gait_symmetry(self):
-        error = torch.zeros(self.num_envs, dtype=torch.float, device=self.device)
-        start_mask = (self.t > self.gait_symmetry_start_time)
-        if start_mask.any():
-            # Separate left and right leg histories
-            left_dof_indices = torch.tensor([0, 1, 2, 3, 4], device=self.device)
-            left_dof_pos_history = self.gait_symmetry_dof_pos_history_buf[:, :, left_dof_indices]
-            left_dof_vel_history = self.gait_symmetry_dof_vel_history_buf[:, :, left_dof_indices]
-            right_dof_indices = torch.tensor([5, 6, 7, 8, 9], device=self.device)
-            right_dof_pos_history = self.gait_symmetry_dof_pos_history_buf[:, :, right_dof_indices]
-            right_dof_vel_history = self.gait_symmetry_dof_vel_history_buf[:, :, right_dof_indices]
-
-            # Shift the right leg history
-            right_dof_pos_history = torch.roll(right_dof_pos_history, shifts=self.gait_symmetry_shift_steps, dims=1)
-            right_dof_vel_history = torch.roll(right_dof_vel_history, shifts=self.gait_symmetry_shift_steps, dims=1)
-
-            # Apply left-right symmetry sign
-            left_right_symmetry_sign = torch.tensor([-1, -1, -1, -1, -1], device=self.device)
-            right_dof_pos_history = right_dof_pos_history * left_right_symmetry_sign.unsqueeze(0).unsqueeze(0)
-            right_dof_vel_history = right_dof_vel_history * left_right_symmetry_sign.unsqueeze(0).unsqueeze(0)
-
-            # Compute symmetry error
-            pos_symmetry_error = torch.mean(torch.square(left_dof_pos_history - right_dof_pos_history), dim=(1,2))
-            vel_symmetry_error = torch.mean(torch.square(left_dof_vel_history - right_dof_vel_history), dim=(1,2))
-            symmetry_error = pos_symmetry_error + 0.05 * vel_symmetry_error  # Velocity term has less weight
-            error[start_mask] = symmetry_error[start_mask]
-
-        return error
-
     def _reward_tracking_lin_vel_x(self):
         error = torch.square(self.commands[:, 0] - self.base_lin_vel[:, 0])
         return torch.exp(-error/self.cfg.rewards.lin_vel_x_tracking_sigma)
@@ -510,9 +462,6 @@ class Qmini(LeggedRobot):
         pitch_error = torch.square(self.base_rpy[:, 1] - self.cfg.rewards.base_pitch_target)
         error = roll_error + pitch_error
         return error
-
-    def _reward_base_acc(self):
-        return torch.sum(torch.square((self.last_root_vel - self.root_states[:, 7:13]) / self.dt), dim=1)
 
     def _reward_feet_orientation(self):
         error = torch.zeros(self.num_envs, dtype=torch.float, device=self.device, requires_grad=False)

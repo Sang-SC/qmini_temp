@@ -10,3 +10,7 @@ build/
 
 # logs
 logs
+
+# others
+isaacgym/
+rsl_rl/
